@@ -32,13 +32,13 @@ def calculate_range_bytes_from_part_number(part_number: int,
     return f"bytes={start_bytes}-{end_bytes}"
 
 
-def download_ranged_bytes(client: S3Client,
-                          bucket: str,
-                          file_name: str,
-                          part_number: int,
-                          chunk_size: int,
-                          file_size: int,
-                          file_chunk_count: int) -> bytes:
+def download_range_bytes(client: S3Client,
+                         bucket: str,
+                         file_name: str,
+                         part_number: int,
+                         chunk_size: int,
+                         file_size: int,
+                         file_chunk_count: int) -> bytes:
     range_string = calculate_range_bytes_from_part_number(
         part_number, chunk_size, file_size, file_chunk_count)
 
@@ -68,7 +68,7 @@ def parse_file_md5(bucket: str,
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
         results = thread_executor.map(
-            lambda part_number: download_ranged_bytes(
+            lambda part_number: download_range_bytes(
                 s3_client,
                 bucket,
                 file_name,
