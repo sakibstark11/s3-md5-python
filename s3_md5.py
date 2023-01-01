@@ -1,10 +1,10 @@
-import argparse
-import multiprocessing
+from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
+from multiprocessing import cpu_count
 from time import perf_counter
 
-import boto3
+from boto3 import client
 from mypy_boto3_s3 import S3Client
 
 
@@ -46,9 +46,9 @@ def parse_file_md5(bucket: str,
                    chunk_size: int,
                    workers: int) -> str:
 
-    client: S3Client = boto3.client('s3')
+    s3_client: S3Client = client('s3')
 
-    file_size = get_file_size(client, bucket, file_name)
+    file_size = get_file_size(s3_client, bucket, file_name)
 
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
@@ -61,7 +61,7 @@ def parse_file_md5(bucket: str,
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
         results = thread_executor.map(
             lambda part_number: download_ranged_bytes(
-                client,
+                s3_client,
                 bucket,
                 file_name,
                 part_number,
@@ -79,10 +79,10 @@ def parse_file_md5(bucket: str,
 
 
 def parse_args():
-    DEFAULT_WORKERS = multiprocessing.cpu_count() * 2 - 1
+    DEFAULT_WORKERS = cpu_count() * 2 - 1
     DEFAULT_CHUNK_SIZE = 1000000
 
-    parser = argparse.ArgumentParser(description='parse md5 of an s3 object')
+    parser = ArgumentParser(description='parse md5 of an s3 object')
     parser.add_argument('bucket',
                         type=str,
                         help='bucket name')
