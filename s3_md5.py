@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
@@ -33,7 +34,8 @@ def download_ranged_bytes(client: S3Client,
         1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
 
     range_string = f"bytes={start_bytes}-{end_bytes}"
-    print(f"part number {part_number + 1} downloading bytes {range_string}")
+    logging.debug(
+        f"part number {part_number + 1} downloading bytes {range_string}")
 
     body = client.get_object(Bucket=bucket,
                              Key=file_name,
@@ -53,10 +55,10 @@ def parse_file_md5(bucket: str,
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
 
-    print(f"file size {file_size}")
+    logging.info(f"file size {file_size}")
 
     file_chunk_count = file_size // chunk_size
-    print(f"file chunk count {file_chunk_count}")
+    logging.info(f"file chunk count {file_chunk_count}")
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
         results = thread_executor.map(
@@ -72,6 +74,7 @@ def parse_file_md5(bucket: str,
 
         hash_object = md5()
 
+        logging.info("downloading")
         for result in results:
             hash_object.update(result)
 
@@ -99,6 +102,11 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s: %(message)s',
+        level=logging.INFO,
+        datefmt='%d-%m-%Y %H:%M:%S')
+
     start_time = perf_counter()
 
     args = parse_args()
@@ -109,6 +117,6 @@ if __name__ == "__main__":
         args.chunk_size,
         args.workers
     )
-    print(f"md5 hash: {md5_hash}")
+    logging.info(f"md5 hash: {md5_hash}")
 
-    print(f"took {perf_counter() - start_time} seconds")
+    logging.info(f"took {perf_counter() - start_time} seconds")
