@@ -18,13 +18,10 @@ def get_file_size(client: S3Client,
     return s3_object['ContentLength']
 
 
-def download_ranged_bytes(client: S3Client,
-                          bucket: str,
-                          file_name: str,
-                          part_number: int,
-                          chunk_size: int,
-                          file_size: int,
-                          file_chunk_count: int) -> bytes:
+def calculate_range_bytes_from_part_number(part_number: int,
+                                           chunk_size: int,
+                                           file_size: int,
+                                           file_chunk_count: int) -> str:
     # start from 0 if its the first iteration
     # if not first iteration part number * chunk size
     start_bytes: int = (part_number * chunk_size) if part_number != 0 else 0
@@ -32,8 +29,19 @@ def download_ranged_bytes(client: S3Client,
     # if not (( part number * chunk size ) + chunk size ) - 1
     end_bytes: int = file_size if part_number + \
         1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
+    return f"bytes={start_bytes}-{end_bytes}"
 
-    range_string = f"bytes={start_bytes}-{end_bytes}"
+
+def download_ranged_bytes(client: S3Client,
+                          bucket: str,
+                          file_name: str,
+                          part_number: int,
+                          chunk_size: int,
+                          file_size: int,
+                          file_chunk_count: int) -> bytes:
+    range_string = calculate_range_bytes_from_part_number(
+        part_number, chunk_size, file_size, file_chunk_count)
+
     logging.debug(
         f"part number {part_number + 1} downloading bytes {range_string}")
     body = client.get_object(Bucket=bucket,
@@ -49,16 +57,12 @@ def parse_file_md5(bucket: str,
                    file_name: str,
                    chunk_size: int,
                    workers: int) -> str:
-
     s3_client: S3Client = client('s3')
 
     file_size = get_file_size(s3_client, bucket, file_name)
-
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
-
     logging.info(f"file size {file_size}")
-
     file_chunk_count = file_size // chunk_size
     logging.info(f"file chunk count {file_chunk_count}")
 
