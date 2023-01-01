@@ -12,7 +12,7 @@ python s3_md5.py <bucket_name> <file_name>
 ```
 there are two *optional* arguments that you may want to provide
 - `-w` or workers arguments sets the number of python threads to use for downloading purposes, by default its set to the following equation `number of cpu cores * 2 - 1`
-- -c or chunk_size in ***bytes*** sets the individual download size on each get request sent to s3, by default its set to `1000000`
+- `-c` or chunk_size in ***bytes*** sets the individual download size on each get request sent to s3, by default its set to `1000000`
 
 # caveats
 
