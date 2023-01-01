@@ -36,10 +36,12 @@ def download_ranged_bytes(client: S3Client,
     range_string = f"bytes={start_bytes}-{end_bytes}"
     logging.debug(
         f"part number {part_number + 1} downloading bytes {range_string}")
-
     body = client.get_object(Bucket=bucket,
                              Key=file_name,
                              Range=range_string)['Body'].read()
+    logging.debug(
+        f"part number {part_number + 1} downloaded bytes {range_string}")
+
     return body
 
 
