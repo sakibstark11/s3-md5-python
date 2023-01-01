@@ -8,4 +8,4 @@ def test_calculate_range_bytes_from_part_number():
     file_chunk_count = 10
     range = calculate_range_bytes_from_part_number(
         part_number, chunk_size, file_size, file_chunk_count)
-    assert range == "bytes=1000000-1999999"
+    assert range == 'bytes=1000000-1999999'

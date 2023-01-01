@@ -29,26 +29,26 @@ def calculate_range_bytes_from_part_number(part_number: int,
     # if not (( part number * chunk size ) + chunk size ) - 1
     end_bytes: int = file_size if part_number + \
         1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
-    return f"bytes={start_bytes}-{end_bytes}"
+    return f'bytes={start_bytes}-{end_bytes}'
 
 
-def download_range_bytes(client: S3Client,
-                         bucket: str,
-                         file_name: str,
-                         part_number: int,
-                         chunk_size: int,
-                         file_size: int,
-                         file_chunk_count: int) -> bytes:
+def get_range_bytes(client: S3Client,
+                    bucket: str,
+                    file_name: str,
+                    part_number: int,
+                    chunk_size: int,
+                    file_size: int,
+                    file_chunk_count: int) -> bytes:
     range_string = calculate_range_bytes_from_part_number(
         part_number, chunk_size, file_size, file_chunk_count)
 
     logging.debug(
-        f"part number {part_number + 1} downloading bytes {range_string}")
+        f'part number {part_number + 1} downloading bytes {range_string}')
     body = client.get_object(Bucket=bucket,
                              Key=file_name,
                              Range=range_string)['Body'].read()
     logging.debug(
-        f"part number {part_number + 1} downloaded bytes {range_string}")
+        f'part number {part_number + 1} downloaded bytes {range_string}')
 
     return body
 
@@ -62,13 +62,13 @@ def parse_file_md5(bucket: str,
     file_size = get_file_size(s3_client, bucket, file_name)
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
-    logging.info(f"file size {file_size}")
+    logging.info(f'file size {file_size}')
     file_chunk_count = file_size // chunk_size
-    logging.info(f"file chunk count {file_chunk_count}")
+    logging.info(f'file chunk count {file_chunk_count}')
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
         results = thread_executor.map(
-            lambda part_number: download_range_bytes(
+            lambda part_number: get_range_bytes(
                 s3_client,
                 bucket,
                 file_name,
@@ -80,7 +80,7 @@ def parse_file_md5(bucket: str,
 
         hash_object = md5()
 
-        logging.info("downloading")
+        logging.info('downloading')
         for result in results:
             hash_object.update(result)
 
@@ -96,18 +96,18 @@ def parse_args():
                         type=str,
                         help='bucket name')
     parser.add_argument('file_name',
-                        help="file name",
+                        help='file name',
                         type=str)
-    parser.add_argument("-w", "--workers", type=int,
+    parser.add_argument('-w', '--workers', type=int,
                         default=DEFAULT_WORKERS,
-                        help="number of cpu threads to use for downloading")
-    parser.add_argument("-c", "--chunk_size", type=int,
+                        help='number of cpu threads to use for downloading')
+    parser.add_argument('-c', '--chunk_size', type=int,
                         default=DEFAULT_CHUNK_SIZE,
-                        help="chunk size to download on each request")
+                        help='chunk size to download on each request')
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s %(levelname)s: %(message)s',
         level=logging.INFO,
@@ -123,6 +123,6 @@ if __name__ == "__main__":
         args.chunk_size,
         args.workers
     )
-    logging.info(f"md5 hash: {md5_hash}")
+    logging.info(f'md5 hash: {md5_hash}')
 
-    logging.info(f"took {perf_counter() - start_time} seconds")
+    logging.info(f'took {perf_counter() - start_time} seconds')
