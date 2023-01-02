@@ -1,3 +1,4 @@
+'''module uses threads to download file from s3 and generates md5 hash'''
 import logging
 from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor
@@ -9,12 +10,13 @@ from boto3 import client
 from mypy_boto3_s3 import S3Client
 
 
-def get_file_size(client: S3Client,
+def get_file_size(s3_client: S3Client,
                   bucket: str,
                   file_name: str,
                   ) -> int:
-    s3_object = client.head_object(Bucket=bucket,
-                                   Key=file_name)
+    '''makes a head object request to get file size in bytes'''
+    s3_object = s3_client.head_object(Bucket=bucket,
+                                      Key=file_name)
     return s3_object['ContentLength']
 
 
@@ -22,31 +24,36 @@ def calculate_range_bytes_from_part_number(part_number: int,
                                            chunk_size: int,
                                            file_size: int,
                                            file_chunk_count: int) -> str:
-    # start from 0 if its the first iteration
-    # if not first iteration part number * chunk size
+    '''
+        calculates the byte range to fetch
+        starts from 0 if its the first iteration
+        if not the first iteration; part number * chunk size
+        uses remaining file length if its the last iteration
+        if not; (( part number * chunk size ) + chunk size ) - 1
+    '''
     start_bytes: int = (part_number * chunk_size) if part_number != 0 else 0
-    # use remaining file length if its the last iteration
-    # if not (( part number * chunk size ) + chunk size ) - 1
+
     end_bytes: int = file_size if part_number + \
         1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
     return f'bytes={start_bytes}-{end_bytes}'
 
 
-def get_range_bytes(client: S3Client,
+def get_range_bytes(s3_client: S3Client,
                     bucket: str,
                     file_name: str,
                     part_number: int,
                     chunk_size: int,
                     file_size: int,
                     file_chunk_count: int) -> bytes:
+    '''fetches the range bytes requested from s3'''
     range_string = calculate_range_bytes_from_part_number(
         part_number, chunk_size, file_size, file_chunk_count)
 
     logging.debug(
         f'part number {part_number + 1} downloading bytes {range_string}')
-    body = client.get_object(Bucket=bucket,
-                             Key=file_name,
-                             Range=range_string)['Body'].read()
+    body = s3_client.get_object(Bucket=bucket,
+                                Key=file_name,
+                                Range=range_string)['Body'].read()
     logging.debug(
         f'part number {part_number + 1} downloaded bytes {range_string}')
 
@@ -58,6 +65,7 @@ def parse_file_md5(s3_client: S3Client,
                    file_name: str,
                    chunk_size: int,
                    workers: int) -> str:
+    '''main function to orchestrate the md5 generation of s3 object'''
     file_size = get_file_size(s3_client, bucket, file_name)
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
@@ -87,6 +95,7 @@ def parse_file_md5(s3_client: S3Client,
 
 
 def parse_args():
+    '''parses command line arguments'''
     DEFAULT_WORKERS = cpu_count() * 2 - 1
     DEFAULT_CHUNK_SIZE = 1000000
 
@@ -115,9 +124,9 @@ if __name__ == '__main__':
     start_time = perf_counter()
 
     args = parse_args()
-    s3_client = client("s3")
+    main_s3_client = client("s3")
     md5_hash = parse_file_md5(
-        s3_client,
+        main_s3_client,
         args.bucket,
         args.file_name,
         args.chunk_size,
