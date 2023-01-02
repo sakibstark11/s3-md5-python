@@ -53,12 +53,11 @@ def get_range_bytes(client: S3Client,
     return body
 
 
-def parse_file_md5(bucket: str,
+def parse_file_md5(s3_client: S3Client,
+                   bucket: str,
                    file_name: str,
                    chunk_size: int,
                    workers: int) -> str:
-    s3_client: S3Client = client('s3')
-
     file_size = get_file_size(s3_client, bucket, file_name)
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
@@ -116,8 +115,9 @@ if __name__ == '__main__':
     start_time = perf_counter()
 
     args = parse_args()
-
+    s3_client = client("s3")
     md5_hash = parse_file_md5(
+        s3_client,
         args.bucket,
         args.file_name,
         args.chunk_size,
