@@ -41,21 +41,17 @@ def calculate_range_bytes_from_part_number(part_number: int,
 def get_range_bytes(s3_client: S3Client,
                     bucket: str,
                     file_name: str,
-                    part_number: int,
-                    chunk_size: int,
-                    file_size: int,
-                    file_chunk_count: int) -> bytes:
+                    range_string: str
+                    ) -> bytes:
     '''fetches the range bytes requested from s3'''
-    range_string = calculate_range_bytes_from_part_number(
-        part_number, chunk_size, file_size, file_chunk_count)
 
     logging.debug(
-        f'part number {part_number + 1} downloading bytes {range_string}')
+        f'downloading bytes {range_string}')
     body = s3_client.get_object(Bucket=bucket,
                                 Key=file_name,
                                 Range=range_string)['Body'].read()
     logging.debug(
-        f'part number {part_number + 1} downloaded bytes {range_string}')
+        f'downloaded bytes {range_string}')
 
     return body
 
@@ -74,15 +70,14 @@ def parse_file_md5(s3_client: S3Client,
     logging.info(f'file chunk count {file_chunk_count}')
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
+
         results = thread_executor.map(
             lambda part_number: get_range_bytes(
                 s3_client,
                 bucket,
                 file_name,
-                part_number,
-                chunk_size,
-                file_size,
-                file_chunk_count),
+                calculate_range_bytes_from_part_number(
+                    part_number, chunk_size, file_size, file_chunk_count)),
             range(file_chunk_count))
 
         hash_object = md5()
