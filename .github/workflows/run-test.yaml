@@ -1,0 +1,14 @@
+on: [push]
+
+jobs:
+  install-modules:
+    runs-on: ubuntu-22.04
+    name: Installs modules
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install dev dependencies
+        uses: ./ 
+        id: install-modules
+        with:
+          command: 'pip install -r dev-requirements.txt'
