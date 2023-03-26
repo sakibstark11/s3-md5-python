@@ -10,6 +10,7 @@ jobs:
 
       - name: Run tests
         id: run-tests
+        working-directory: /github/workspace
         uses: ./
         with:
           args: "python3 -m pytest"
