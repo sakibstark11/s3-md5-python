@@ -10,5 +10,4 @@ jobs:
       - name: Install dev dependencies
         uses: ./ 
         with:
-          args:
-            command: 'pip install -r dev-requirements.txt'
+          args: 'pip install -r dev-requirements.txt'
