@@ -8,7 +8,6 @@ COPY ./dev-requirements.txt /
 RUN pip install -r dev-requirements.txt
 
 ARG command-to-run
-ENV command-to-run=$command-to-run
+ENV COMMAND=${command-to-run}
 
-
-ENTRYPOINT [ "/bin/bash", "-c", "${command-to-run}" ]
+ENTRYPOINT [ "/bin/bash", "-c", "${COMMAND}" ]
