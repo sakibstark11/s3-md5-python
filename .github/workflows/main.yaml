@@ -8,6 +8,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install dev dependencies
-        uses: ./ 
+        id: install-modules
+        uses: ./
         with:
-          command-to-run: "pip3 install -r dev-requirements.txt"
+          command-to-run: "pip install -r dev-requirements.txt"
