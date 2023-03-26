@@ -12,3 +12,8 @@ jobs:
         uses: ./
         with:
           args: "pip install -r dev-requirements.txt"
+      - name: Run tests
+        id: run-tests
+        uses: ./
+        with:
+          args: "pytest"
