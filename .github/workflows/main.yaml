@@ -16,4 +16,4 @@ jobs:
         id: run-tests
         uses: ./
         with:
-          args: "pytest"
+          args: "python -m pytest"
