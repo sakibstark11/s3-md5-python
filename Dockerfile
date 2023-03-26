@@ -7,4 +7,4 @@ RUN apt-get install python3-pip -y
 COPY ./dev-requirements.txt /
 RUN pip install -r dev-requirements.txt
 
-ENTRYPOINT [ "" ]
+ENTRYPOINT [ "/bin/bash", "-c" ]
