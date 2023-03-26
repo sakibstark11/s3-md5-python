@@ -1,5 +1,3 @@
-on: [push]
-
 name: 'Build'
 description: 'Action for building a custom action'
 
