@@ -4,8 +4,6 @@ RUN apt-get update
 RUN apt-get install python3 -y
 RUN apt-get install python3-pip -y
 
-WORKDIR /github/workspace
-
-RUN pip install -r dev-requirements.txt
+RUN pip install -r /github/workspace/dev-requirements.txt
 
 CMD [ "" ]
