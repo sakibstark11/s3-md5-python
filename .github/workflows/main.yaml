@@ -15,6 +15,7 @@ jobs:
           args: "python3 -m pytest ."
   
   run-type-checks:
+    needs: run-tests
     name: Run type checks
     runs-on: ubuntu-22.04
     steps:
