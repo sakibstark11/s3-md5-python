@@ -7,7 +7,7 @@ RUN apt-get install python3-pip -y
 COPY ./dev-requirements.txt /
 RUN pip install -r dev-requirements.txt
 
-ARG command-to-run
-ENV COMMAND=${command-to-run}
+ARG COMMAND
+ENV COMMAND=${COMMAND}
 
 ENTRYPOINT [ "/bin/bash", "-c", "${COMMAND}" ]

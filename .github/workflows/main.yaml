@@ -12,7 +12,7 @@ jobs:
         id: run-tests
         uses: ./
         with:
-          command-to-run: "python3 -m pytest ."
+          COMMAND: "python3 -m pytest ."
   
   # run-type-checks:
   #   needs: run-tests
