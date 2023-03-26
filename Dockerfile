@@ -5,6 +5,6 @@ RUN apt-get install python3 -y
 RUN apt-get install python3-pip -y
 
 COPY ./dev-requirements.txt /
-RUN pip install dev-requirements.txt
+RUN pip install -r dev-requirements.txt
 
 CMD [ "" ]
