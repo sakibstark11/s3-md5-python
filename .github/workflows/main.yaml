@@ -3,7 +3,7 @@ on: [push]
 jobs:
   install-modules:
     runs-on: ubuntu-22.04
-    name: Installs modules
+    name: Install modules
     steps:
       - name: Checkout
         uses: actions/checkout@v3
