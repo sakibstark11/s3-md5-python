@@ -1,0 +1,13 @@
+# action.yml
+name: 'Build Image'
+description: 'A custom container to be used for jobs'
+inputs:
+  command-to-run:
+    description: 'Command to run in the container'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.command-to-run }}
