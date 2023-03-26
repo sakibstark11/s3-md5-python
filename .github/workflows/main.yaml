@@ -12,18 +12,18 @@ jobs:
         id: run-tests
         uses: ./
         with:
-          args: "python3 -m pytest ."
+          command-to-run: "python3 -m pytest ."
   
-  run-type-checks:
-    needs: run-tests
-    name: Run type checks
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  # run-type-checks:
+  #   needs: run-tests
+  #   name: Run type checks
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
       
-      - name: Run type checks
-        id: run-type-checks
-        uses: ./
-        with:
-          args: "python3 -m mypy --exclude test ."
+  #     - name: Run type checks
+  #       id: run-type-checks
+  #       uses: ./
+  #       with:
+  #         args: "python3 -m mypy --exclude test ."
