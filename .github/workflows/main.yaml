@@ -11,5 +11,4 @@ jobs:
         id: install-modules
         uses: ./
         with:
-          args:
-            command-to-run: "pip install -r dev-requirements.txt"
+          args: "pip install -r dev-requirements.txt"
