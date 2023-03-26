@@ -7,17 +7,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
       - name: Run tests
         id: run-tests
         uses: ./
         with:
           args: "python3 -m pytest ."
+  
   run-type-checks:
     runs-on: ubuntu-22.04
     name: Run type checks
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      
       - name: Run type checks
         id: run-type-checks
         uses: ./
