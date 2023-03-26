@@ -8,4 +8,4 @@ COPY ./ /
 
 ARG command-to-run
 
-ENTRYPOINT [ "${command-to-run}" ]
+ENTRYPOINT [ ${command-to-run} ]
