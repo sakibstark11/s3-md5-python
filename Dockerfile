@@ -6,4 +6,6 @@ RUN apt-get install python3-pip -y
 
 COPY ./ /
 
-ENTRYPOINT [ "" ]
+ARG command-to-run
+
+ENTRYPOINT [ "${command-to-run}" ]
