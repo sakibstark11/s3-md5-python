@@ -9,6 +9,5 @@ jobs:
         uses: actions/checkout@v3
       - name: Install dev dependencies
         uses: ./ 
-        id: install-modules
-        with:
+        args:
           command: 'pip install -r dev-requirements.txt'
