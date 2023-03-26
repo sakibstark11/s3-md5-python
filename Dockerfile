@@ -5,4 +5,6 @@ RUN apt install python3 -y
 
 COPY ./ /
 
-ENTRYPOINT [ "/bin/sh", "-c" ]
+ARG command
+
+ENTRYPOINT [ "/bin/sh", "-c", $command ]
