@@ -3,7 +3,7 @@ Get fast md5 hashes for an s3 file.
 ## installation
 - python 3.10
 - boto3
-- boto3-stubs[all]
+- boto3-stubs[s3]
 
 ## how to use
 From the command line run
