@@ -5,4 +5,4 @@ RUN apt install python3 -y
 
 COPY ./ /
 
-ENTRYPOINT [ "bash -c '$1'" ]
+ENTRYPOINT [ "/bin/bash -c '$1'" ]
