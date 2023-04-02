@@ -1,3 +1,4 @@
+'''common resource for testing'''
 from boto3 import client
 from moto import mock_s3
 from pytest import fixture

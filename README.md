@@ -8,7 +8,7 @@ Get fast md5 hashes for an s3 file.
 ## how to use
 From the command line run
 ```
-python s3_md5.py <bucket_name> <file_name>
+python main.py <bucket_name> <file_name>
 ```
 There are two *optional* arguments that you may want to provide
 - `-w` or workers sets the number of python threads to use for downloading purposes, by default its set to the following equation `number of cpu cores * 2 - 1`
