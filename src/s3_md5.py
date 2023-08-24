@@ -1,11 +1,28 @@
 '''module uses threads to download file from s3 and generates md5 hash'''
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
+from multiprocessing import Process, Queue
 
 from mypy_boto3_s3 import S3Client
 
 from src.logger import logger
 from src.s3_file import S3FileHelper
+
+
+def consumer(queue: Queue):
+    hash_object = md5()
+    print('Consumer: Running', flush=True)
+    # consume work
+    while True:
+        # get a unit of work
+        item = queue.get()
+        # check for stop
+        if item is None:
+            break
+        # report
+        print(f'>got {item}', flush=True)
+    # all done
+    print('Consumer: Done', flush=True)
 
 
 def parse_file_md5(s3_client: S3Client,
@@ -32,11 +49,13 @@ def parse_file_md5(s3_client: S3Client,
             logger.info(f"downloaded {ranged_bytes_string}")
             return ranged_bytes
 
-        logger.info('downloading file')
-        results = thread_executor.map(wrapper,
-                                      range(file_chunk_count))
+        queue = Queue()
+        consumer_process = Process(target=consumer, args=(queue,))
 
-        hash_object = md5()
-        for result in results:
-            hash_object.update(result)
-        return hash_object.hexdigest()
+        logger.info('downloading file')
+        for part_number in range(file_chunk_count):
+            future = thread_executor.submit(wrapper,
+                                            part_number)
+            queue.put(future)
+
+        queue.put(None)
