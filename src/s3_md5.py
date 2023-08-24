@@ -83,7 +83,7 @@ def parse_file_md5(s3_client: S3Client,
     logger.info(f'chunk to get per block {chunk_count_per_block}')
 
     queue = Queue()
-    variable = Manager().Value(str, None)
+    variable = Manager().Value(str, '')
 
     consumer_process = Process(target=consumer, args=(queue, variable))
     consumer_process.start()
