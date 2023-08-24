@@ -1,14 +1,12 @@
 '''module uses threads to download file from s3 and generates md5 hash'''
 from concurrent.futures import ThreadPoolExecutor
 from hashlib import md5
-from multiprocessing import Process, Queue, Manager
+from multiprocessing import Manager, Process, Queue
 from multiprocessing.managers import ValueProxy
-from typing import Type
 
 from mypy_boto3_s3 import S3Client
 
 from src.logger import logger
-
 from src.s3_file import S3FileHelper
 
 
