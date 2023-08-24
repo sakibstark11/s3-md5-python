@@ -4,6 +4,7 @@ Get fast md5 hashes for an s3 file.
 - python 3.10
 - boto3
 - boto3-stubs[s3]
+- rehash
 
 ## how to use
 From the command line run
