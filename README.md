@@ -1,10 +1,9 @@
 # s3-md5
-Get fast md5 hashes for an s3 file.
+Get fast md5 hashes for an s3 file. It a process that listens on the incoming chunks via a process queue.
 ## installation
 - python 3.10
 - boto3
 - boto3-stubs[s3]
-- rehash
 
 ## how to use
 From the command line run
