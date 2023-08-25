@@ -8,17 +8,24 @@ from mypy_boto3_s3 import S3Client
 
 from src.logger import logger
 from src.s3_file import S3FileHelper
+from src.signals import CANCEL, COMPLETE
 
 
 def consumer(queue: Queue, variable: ValueProxy[str]):
     '''a process that subscribes to the queue and processes md5'''
     hasher = md5()
     while True:
-        item = queue.get()
-        if item is None:
-            break
-        logger.info("consuming range")
-        hasher.update(item)
+        try:
+            item = queue.get()
+            if item == COMPLETE:
+                break
+            if item == CANCEL:
+                raise ValueError("one of the processes failed")
+            logger.info("consuming range")
+            hasher.update(item)
+        except Exception as exception:  # pylint: disable=broad-except
+            logger.error(exception)
+            return
     md5_hash = hasher.hexdigest()
     logger.info(md5_hash)
     variable.value = md5_hash
@@ -43,9 +50,9 @@ def process_block(block_number: int,
         def wrapper(part_number: int):
             ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
                 part_number, chunk_size, chunk_count)
-            logger.debug(f"downloading {ranged_bytes_string}")
+            logger.info(f"downloading {ranged_bytes_string}")
             ranged_bytes = s3_file.get_range_bytes(ranged_bytes_string)
-            logger.debug(f"downloaded {ranged_bytes_string}")
+            logger.info(f"downloaded {ranged_bytes_string}")
             return ranged_bytes
 
         results = thread_executor.map(wrapper, range(
@@ -89,8 +96,14 @@ def parse_file_md5(s3_client: S3Client,
     consumer_process.start()
 
     for block_number in range(0, block_count):
-        process_block(block_number, block_count, chunk_count,
-                      chunk_size, chunk_count_per_block, workers // 2, queue, s3_file)
-    queue.put(None)
+        try:
+            process_block(block_number, block_count, chunk_count,
+                          chunk_size, chunk_count_per_block, workers // 2, queue, s3_file)
+        except Exception as exception:  # pylint: disable=broad-except
+            logger.error(exception)
+            queue.put(CANCEL)
+            raise ValueError from exception
+
+    queue.put(COMPLETE)
     consumer_process.join()
     return variable.value
