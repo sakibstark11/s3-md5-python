@@ -4,8 +4,8 @@ from hashlib import md5
 
 from mypy_boto3_s3 import S3Client
 
-from src.logger import logger
-from src.s3_file import S3FileHelper
+from .logger import logger
+from .s3_file import S3FileHelper
 
 
 def parse_file_md5(s3_client: S3Client,

@@ -1,9 +1,7 @@
 '''tests range byte calculator function'''
 from typing import Tuple
-
 from mypy_boto3_s3 import S3Client
-
-from src.s3_file import S3FileHelper
+from s3_md5.src.s3_file import S3FileHelper
 
 
 def test_calculate_range_bytes_from_part_number(s3_setup: Tuple[S3Client, str, str, str]):

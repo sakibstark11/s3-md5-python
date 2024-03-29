@@ -11,7 +11,9 @@ def s3_setup():
         test_bucket = 'bucket'
         test_file_name = 'key'
         test_body = '0123456789'
-        s3_client.create_bucket(Bucket=test_bucket)
+        s3_client.create_bucket(Bucket=test_bucket, CreateBucketConfiguration={
+            'LocationConstraint': 'ap-east-1',
+        },)
         s3_client.put_object(Bucket=test_bucket,
                              Key=test_file_name,
                              Body=test_body)

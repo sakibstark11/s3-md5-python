@@ -1,0 +1,36 @@
+on:
+    push:
+        branches:
+            - main
+permissions:
+    contents: write
+    pull-requests: read
+name: Package
+jobs:
+    package:
+        name: Run Python Packager
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Checkout Branch
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10"
+
+            - name: Create Tag
+              id: tag_generator
+              uses: anothrNick/github-tag-action@1.36.0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  WITH_V: true
+                  DRY_RUN: true
+
+            - name: Install Dependencies
+              run: VERSION=${{ steps.tag_generator.outputs.tag }} pip install .
+
+            - name: Create Wheel File
+              run: python setup.py bdist_wheel sdist
