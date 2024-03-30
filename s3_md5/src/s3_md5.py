@@ -8,10 +8,12 @@ from mypy_boto3_s3 import S3Client
 
 from .logger import logger
 from .s3_file import S3FileHelper
-from .signals import CANCEL, COMPLETE
+from .signals import CANCEL, COMPLETE, cancel_type, complete_type
+
+queue_type = Queue[bytes | cancel_type | complete_type]
 
 
-def consumer(queue: Queue, variable: ValueProxy[str]):
+def consumer(queue: queue_type, variable: ValueProxy[str]):
     '''a process that subscribes to the queue and processes md5'''
     hasher = md5()
     while True:
@@ -31,14 +33,13 @@ def consumer(queue: Queue, variable: ValueProxy[str]):
     variable.value = md5_hash
 
 
-def process_block(block_number: int,
-                  block_count: int,
-                  chunk_count: int,
-                  chunk_size: int,
-                  chunk_count_per_block: int,
-                  workers: int,
-                  queue: Queue,
-                  s3_file: S3FileHelper):
+def fetch_block(block_number: int,
+                block_count: int,
+                chunk_count: int,
+                chunk_size: int,
+                chunk_count_per_block: int,
+                workers: int,
+                s3_file: S3FileHelper):
     '''runs individual blocks into a separate process'''
     logger.info(f"processing block {block_number}")
     start_part_number = block_number * chunk_count_per_block
@@ -58,8 +59,7 @@ def process_block(block_number: int,
         results = thread_executor.map(wrapper, range(
             start_part_number, end_part_number + 1))
 
-        for result in results:
-            queue.put(result)
+        return results
 
 
 def parse_file_md5(s3_client: S3Client,
@@ -89,7 +89,7 @@ def parse_file_md5(s3_client: S3Client,
     chunk_count_per_block = chunk_count // block_count
     logger.info(f'chunk to get per block {chunk_count_per_block}')
 
-    queue = Queue()
+    queue: queue_type = Queue()
     variable = Manager().Value(str, '')
 
     consumer_process = Process(target=consumer, args=(queue, variable))
@@ -97,8 +97,9 @@ def parse_file_md5(s3_client: S3Client,
 
     for block_number in range(0, block_count):
         try:
-            process_block(block_number, block_count, chunk_count,
-                          chunk_size, chunk_count_per_block, workers // 2, queue, s3_file)
+            for item in fetch_block(block_number, block_count, chunk_count,
+                                    chunk_size, chunk_count_per_block, workers // 2, s3_file):
+                queue.put(item)
         except Exception as exception:  # pylint: disable=broad-except
             logger.error(exception)
             queue.put(CANCEL)

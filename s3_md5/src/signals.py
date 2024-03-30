@@ -1,3 +1,7 @@
+from typing import Literal
+
 '''signal values'''
-CANCEL = "CANCEL"
-COMPLETE = "COMPLETE"
+cancel_type = Literal['CANCEL']
+complete_type = Literal['COMPLETE']
+CANCEL: cancel_type = "CANCEL"
+COMPLETE: complete_type = "COMPLETE"
