@@ -20,8 +20,8 @@ setup(
             "autopep8==2.0.1",
             "moto==4.0.12",
             "pytest==7.2.0",
-            "wheel==0.43.0",
-        ]
+        ],
+        "release": ["wheel==0.43.0"]
     },
     packages=find_packages(exclude=["test", "venv"]),
     python_requires=">3.10.12",

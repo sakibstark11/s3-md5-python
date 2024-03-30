@@ -27,10 +27,9 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   WITH_V: true
-                  DRY_RUN: true
 
             - name: Install Dependencies
-              run: VERSION=${{ steps.tag_generator.outputs.tag }} pip install .
+              run: VERSION=${{ steps.tag_generator.outputs.tag }} pip install ".[release]"
 
             - name: Create Wheel File
               run: python setup.py bdist_wheel sdist
