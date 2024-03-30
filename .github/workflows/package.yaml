@@ -1,10 +1,13 @@
 on:
-    push:
+    workflow_run:
+        workflows: ["Test"]
+        types: [completed]
         branches:
             - main
 permissions:
     contents: write
     pull-requests: read
+
 name: Package
 jobs:
     package:
@@ -26,10 +29,18 @@ jobs:
               uses: anothrNick/github-tag-action@1.36.0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  WITH_V: true
+                  WITH_V: false
 
             - name: Install Dependencies
               run: VERSION=${{ steps.tag_generator.outputs.tag }} pip install ".[release]"
 
             - name: Create Wheel File
-              run: python setup.py bdist_wheel sdist
+              run: VERSION=${{ steps.tag_generator.outputs.tag }} python setup.py bdist_wheel sdist
+
+            - name: Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: dist/s3_md5-${{ steps.tag_generator.outputs.tag }}-py3-none-any.whl
+                  generate_release_notes: true
+                  make_latest: true
+                  tag_name: ${{ steps.tag_generator.outputs.tag }}
