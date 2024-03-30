@@ -24,7 +24,7 @@ setup(
         ]
     },
     packages=find_packages(exclude=["test", "venv"]),
-    python_requires="==3.10.12",
+    python_requires=">3.10.12",
     entry_points={
         'console_scripts': ['s3-md5=s3_md5.cmd:run'],
     }
