@@ -1,0 +1,46 @@
+on:
+    workflow_run:
+        workflows: ["Test"]
+        types: [completed]
+        branches:
+            - main
+permissions:
+    contents: write
+    pull-requests: read
+
+name: Package
+jobs:
+    package:
+        name: Run Python Packager
+        runs-on: ubuntu-22.04
+        steps:
+            - name: Checkout Branch
+              uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.10"
+
+            - name: Create Tag
+              id: tag_generator
+              uses: anothrNick/github-tag-action@1.36.0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  WITH_V: false
+
+            - name: Install Dependencies
+              run: VERSION=${{ steps.tag_generator.outputs.tag }} pip install ".[release]"
+
+            - name: Create Wheel File
+              run: VERSION=${{ steps.tag_generator.outputs.tag }} python setup.py bdist_wheel sdist
+
+            - name: Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: dist/s3_md5-${{ steps.tag_generator.outputs.tag }}-py3-none-any.whl
+                  generate_release_notes: true
+                  make_latest: true
+                  tag_name: ${{ steps.tag_generator.outputs.tag }}

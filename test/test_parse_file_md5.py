@@ -1,10 +1,8 @@
 '''tests the driver function'''
 from hashlib import md5
 from typing import Tuple
-
 from mypy_boto3_s3 import S3Client
-
-from src.s3_md5 import parse_file_md5
+from s3_md5.src.s3_md5 import parse_file_md5
 
 
 def test_parse_file_md5(s3_setup: Tuple[S3Client, str, str, str]):
