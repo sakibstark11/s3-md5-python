@@ -6,9 +6,9 @@ from multiprocessing.managers import ValueProxy
 
 from mypy_boto3_s3 import S3Client
 
-from src.logger import logger
-from src.s3_file import S3FileHelper
-from src.signals import CANCEL, COMPLETE
+from .logger import logger
+from .s3_file import S3FileHelper
+from .signals import CANCEL, COMPLETE
 
 
 def consumer(queue: Queue, variable: ValueProxy[str]):
