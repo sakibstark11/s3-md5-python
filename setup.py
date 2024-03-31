@@ -1,4 +1,4 @@
-
+'''installer'''
 from os import getenv
 
 from setuptools import find_packages, setup
@@ -20,6 +20,7 @@ setup(
             "autopep8==2.0.1",
             "moto==4.0.12",
             "pytest==7.2.0",
+            "pylint==3.1.0",
         ],
         "release": ["wheel==0.43.0"]
     },
