@@ -1,63 +1,17 @@
 '''module uses threads to download file from s3 and generates md5 hash'''
 from concurrent.futures import ThreadPoolExecutor
-from hashlib import md5
-from multiprocessing import Manager, Process, Queue
-from multiprocessing.managers import ValueProxy
+from multiprocessing import Manager, Process
+from multiprocessing.managers import DictProxy, ValueProxy
+from typing import Any
 
 from mypy_boto3_s3 import S3Client
+from setproctitle import setproctitle
 
+from .consumer import consumer
 from .logger import logger
 from .s3_file import S3FileHelper
-from .signals import CANCEL, COMPLETE
 
-
-def consumer(queue: Queue, variable: ValueProxy[str]):
-    '''a process that subscribes to the queue and processes md5'''
-    hasher = md5()
-    while True:
-        try:
-            item = queue.get()
-            if item == COMPLETE:
-                break
-            if item == CANCEL:
-                raise ValueError("one of the processes failed")
-            logger.info("consuming range")
-            hasher.update(item)
-        except Exception as exception:  # pylint: disable=broad-except
-            logger.error(exception)
-            return
-    md5_hash = hasher.hexdigest()
-    logger.info(md5_hash)
-    variable.value = md5_hash
-
-
-def fetch_block(block_number: int,
-                block_count: int,
-                chunk_count: int,
-                chunk_size: int,
-                chunk_count_per_block: int,
-                workers: int,
-                s3_file: S3FileHelper):
-    '''runs individual blocks into a separate process'''
-    logger.info(f"processing block {block_number}")
-    start_part_number = block_number * chunk_count_per_block
-    end_part_number = chunk_count - 1 if block_number == block_count - \
-        1 else (start_part_number + chunk_count_per_block) - 1
-    logger.info(f"part number {start_part_number}-{end_part_number}")
-
-    with ThreadPoolExecutor(max_workers=workers) as thread_executor:
-        def wrapper(part_number: int):
-            ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
-                part_number, chunk_size, chunk_count)
-            logger.info(f"downloading {ranged_bytes_string}")
-            ranged_bytes = s3_file.get_range_bytes(ranged_bytes_string)
-            logger.info(f"downloaded {ranged_bytes_string}")
-            return ranged_bytes
-
-        results = thread_executor.map(wrapper, range(
-            start_part_number, end_part_number + 1))
-
-        return results
+setproctitle('s3-md5: main process')
 
 
 def parse_file_md5(s3_client: S3Client,
@@ -81,28 +35,30 @@ def parse_file_md5(s3_client: S3Client,
     if chunk_count < workers:
         raise AssertionError('chunk count cannot be smaller than workers')
 
-    block_count = chunk_count // workers
-    logger.info(f'block count {block_count}')
+    md5_store = Manager().Value(str, '')
+    byte_store = Manager().dict()
 
-    chunk_count_per_block = chunk_count // block_count
-    logger.info(f'chunk to get per block {chunk_count_per_block}')
-
-    queue = Queue()
-    variable = Manager().Value(str, '')
-
-    consumer_process = Process(target=consumer, args=(queue, variable))
+    consumer_process = Process(target=consumer, args=(
+        byte_store, md5_store, chunk_count), name="s3-md5: sub process")
     consumer_process.start()
+    chunk_count = file_size // chunk_size
 
-    for block_number in range(0, block_count):
-        try:
-            for item in fetch_block(block_number, block_count, chunk_count,
-                                    chunk_size, chunk_count_per_block, workers // 2, s3_file):
-                queue.put(item)
-        except Exception as exception:  # pylint: disable=broad-except
-            logger.error(exception)
-            queue.put(CANCEL)
-            raise ValueError from exception
+    with ThreadPoolExecutor(max_workers=workers) as thread_executor:
+        def wrapper(part_number: int):
+            ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
+                part_number, chunk_size, chunk_count)
+            logger.info(f"downloading {ranged_bytes_string}")
+            ranged_bytes = s3_file.get_range_bytes(ranged_bytes_string)
+            logger.info(f"downloaded {ranged_bytes_string}")
+            byte_store[part_number] = ranged_bytes
+        for part_number in range(chunk_count):
+            try:
+                thread_executor.submit(wrapper, part_number)
+            except Exception as exception:
+                logger.error(f"parse_file_md5 {exception}")
+                consumer_process.kill()
+                raise exception
+        thread_executor.shutdown()
 
-    queue.put(COMPLETE)
     consumer_process.join()
-    return variable.value
+    return md5_store.value
