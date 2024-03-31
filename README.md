@@ -49,6 +49,7 @@ There are two _optional_ arguments that you may want to provide
 
 for a file size of `1048576000` bytes
 on a 250 mpbs bandwidth
+on a macbook m1 8 core cpu
 a chunk size of `4000000` works the best as it completes it within ~90 seconds
 
 ## Caveats
