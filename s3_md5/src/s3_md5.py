@@ -2,8 +2,6 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager, Process
-from multiprocessing.managers import DictProxy, ValueProxy
-from typing import Any
 
 from mypy_boto3_s3 import S3Client
 from setproctitle import setproctitle
@@ -55,6 +53,7 @@ def parse_file_md5(s3_client: S3Client,
         for part_number in range(chunk_count):
             try:
                 thread_executor.submit(wrapper, part_number)
+            # pylint: disable=broad-exception-caught
             except Exception as exception:
                 logger.error(f"parse_file_md5 {exception}")
                 consumer_process.kill()
