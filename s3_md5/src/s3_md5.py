@@ -8,12 +8,10 @@ from mypy_boto3_s3 import S3Client
 
 from .logger import logger
 from .s3_file import S3FileHelper
-from .signals import CANCEL, COMPLETE, cancel_type, complete_type
-
-queue_type = Queue[bytes | cancel_type | complete_type]
+from .signals import CANCEL, COMPLETE
 
 
-def consumer(queue: queue_type, variable: ValueProxy[str]):
+def consumer(queue: Queue, variable: ValueProxy[str]):
     '''a process that subscribes to the queue and processes md5'''
     hasher = md5()
     while True:
@@ -89,7 +87,7 @@ def parse_file_md5(s3_client: S3Client,
     chunk_count_per_block = chunk_count // block_count
     logger.info(f'chunk to get per block {chunk_count_per_block}')
 
-    queue: queue_type = Queue()
+    queue = Queue()
     variable = Manager().Value(str, '')
 
     consumer_process = Process(target=consumer, args=(queue, variable))
