@@ -1,9 +1,17 @@
 '''creates a logger'''
 import logging
+import os
 import sys
 
+levels = {
+    'CRITICAL': logging.CRITICAL,
+    'ERROR': logging.ERROR,
+    'WARNING': logging.WARNING,
+    'INFO': logging.INFO,
+    'DEBUG': logging.DEBUG
+}
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(levels.get(os.getenv('LOG_LEVEL', None), logging.INFO))
 
 stream_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(

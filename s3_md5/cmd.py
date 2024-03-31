@@ -9,6 +9,7 @@ from s3_md5.src.s3_md5 import parse_file_md5
 
 
 def run():
+    '''runs the script'''
     start_time = perf_counter()
     args = parse_args()
     main_s3_client = client('s3')

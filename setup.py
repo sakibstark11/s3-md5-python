@@ -14,7 +14,8 @@ setup(
     install_requires=[
         "boto3==1.26.41",
         "boto3-stubs[s3]",
-        "setproctitle==1.3.3"
+        "setproctitle==1.3.3",
+        "tqdm==4.66.2"
     ],
     extras_require={
         "develop": [

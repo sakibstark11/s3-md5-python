@@ -1,4 +1,5 @@
 '''module uses threads to download file from s3 and generates md5 hash'''
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager, Process
 from multiprocessing.managers import DictProxy, ValueProxy
@@ -25,12 +26,12 @@ def parse_file_md5(s3_client: S3Client,
     file_size = s3_file.get_file_size()
     if file_size < chunk_size:
         raise AssertionError('file size cannot be smaller than chunk size')
-    logger.info(f'file size {file_size} bytes')
-    logger.info(f'chunk size {chunk_size} bytes')
-    logger.info(f'workers {workers}')
+    logger.debug(f'file size {file_size} bytes')
+    logger.debug(f'chunk size {chunk_size} bytes')
+    logger.debug(f'workers {workers}')
 
     chunk_count = file_size // chunk_size
-    logger.info(f'chunk count {chunk_count}')
+    logger.debug(f'chunk count {chunk_count}')
 
     if chunk_count < workers:
         raise AssertionError('chunk count cannot be smaller than workers')
@@ -47,9 +48,9 @@ def parse_file_md5(s3_client: S3Client,
         def wrapper(part_number: int):
             ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
                 part_number, chunk_size, chunk_count)
-            logger.info(f"downloading {ranged_bytes_string}")
+            logger.debug(f"downloading {ranged_bytes_string}")
             ranged_bytes = s3_file.get_range_bytes(ranged_bytes_string)
-            logger.info(f"downloaded {ranged_bytes_string}")
+            logger.debug(f"downloaded {ranged_bytes_string}")
             byte_store[part_number] = ranged_bytes
         for part_number in range(chunk_count):
             try:
@@ -57,7 +58,8 @@ def parse_file_md5(s3_client: S3Client,
             except Exception as exception:
                 logger.error(f"parse_file_md5 {exception}")
                 consumer_process.kill()
-                raise exception
+                thread_executor.shutdown(wait=False, cancel_futures=True)
+                sys.exit(1)
         thread_executor.shutdown()
 
     consumer_process.join()
