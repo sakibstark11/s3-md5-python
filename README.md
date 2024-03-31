@@ -32,10 +32,10 @@ From the command line, run
 s3-md5 <bucket_name> <file_name>
 ```
 
-Or you can directly invoke the script by going into the `s3_md5` folder and running
+Or you can directly invoke the script by running
 
 ```sh
-python main.py <bucket_name> <file_name>
+python s3_md5/main.py <bucket_name> <file_name>
 ```
 
 There are two _optional_ arguments that you may want to provide
