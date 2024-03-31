@@ -1,6 +1,6 @@
 # s3-md5
 
-Get fast md5 hashes for an s3 file.
+Get fast md5 hashes for an s3 file. This works by utilizing a process to fetch chunks into by doing them in threads while having another process consuming the shared dictionary. Given MD5 hashes need to be processed sequentially, it keeps looking for the expected chunk to ensure the order is right.
 
 ## Requirements
 
@@ -50,7 +50,7 @@ There are two _optional_ arguments that you may want to provide
 for a file size of `1048576000` bytes
 on a 250 mpbs bandwidth
 on a macbook m1 8 core cpu
-a chunk size of `4000000` works the best as it completes it within ~90 seconds
+a chunk size of `4000000` works the best as it completes it within ~100 seconds
 
 ## Caveats
 
