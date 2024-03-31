@@ -22,17 +22,17 @@ def parse_file_md5(s3_client: S3Client,
     s3_file = S3FileHelper(s3_client, bucket, file_name)
 
     file_size = s3_file.get_file_size()
+    logger.info(f'file size {file_size} bytes')
     if file_size < chunk_size:
-        raise AssertionError('file size cannot be smaller than chunk size')
-    logger.debug(f'file size {file_size} bytes')
-    logger.debug(f'chunk size {chunk_size} bytes')
-    logger.debug(f'workers {workers}')
+        chunk_size = file_size
+    logger.info(f'chunk size {chunk_size} bytes')
 
     chunk_count = file_size // chunk_size
     logger.debug(f'chunk count {chunk_count}')
 
     if chunk_count < workers:
-        raise AssertionError('chunk count cannot be smaller than workers')
+        workers = chunk_count
+    logger.info(f'workers {workers}')
 
     md5_store = Manager().Value(str, '')
     byte_store = Manager().dict()

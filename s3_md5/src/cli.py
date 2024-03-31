@@ -2,11 +2,15 @@
 from argparse import ArgumentParser
 from multiprocessing import cpu_count
 
+from speedtest import Speedtest
+
+from .logger import logger
+
 
 def parse_args():
     '''parses command line arguments'''
     DEFAULT_WORKERS = cpu_count() * 2 - 1
-    DEFAULT_CHUNK_SIZE = 1000000
+    BIT_IN_BYTE = 0.125
 
     parser = ArgumentParser(description='parse md5 of an s3 object')
     parser.add_argument('bucket',
@@ -19,6 +23,12 @@ def parse_args():
                         default=DEFAULT_WORKERS,
                         help='number of cpu threads to use for downloading')
     parser.add_argument('-c', '--chunk_size', type=int,
-                        default=DEFAULT_CHUNK_SIZE,
+                        default=None,
                         help='chunk size to download on each request')
-    return parser.parse_args()
+    parsed_args = parser.parse_args()
+    if parsed_args.chunk_size is None:
+        logger.info("picking chunk size")
+        speed_test = Speedtest()
+        parsed_args.chunk_size = int(
+            speed_test.download() * BIT_IN_BYTE) // parsed_args.workers
+    return parsed_args
