@@ -2,6 +2,8 @@
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager, Process
+from signal import SIGCHLD, signal
+from typing import Any
 
 from mypy_boto3_s3 import S3Client
 from setproctitle import setproctitle
@@ -11,6 +13,16 @@ from .logger import logger
 from .s3_file import S3FileHelper
 
 setproctitle('s3-md5: main process')
+
+
+def consumer_death_strategy(signal_number: int, stack: Any, process: Process, thread_executor: ThreadPoolExecutor):
+    '''handler to call when consumer process dies'''
+    logger.error(f"consumer died with {signal_number}")
+    logger.error(f"consumer stack {stack}")
+    logger.warning("will exit")
+    process.terminate()
+    thread_executor.shutdown(wait=False, cancel_futures=True)
+    sys.exit(1)
 
 
 def parse_file_md5(s3_client: S3Client,
@@ -40,9 +52,11 @@ def parse_file_md5(s3_client: S3Client,
     consumer_process = Process(target=consumer, args=(
         byte_store, md5_store, chunk_count), name="s3-md5: sub process")
     consumer_process.start()
-    chunk_count = file_size // chunk_size
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
+        signal(SIGCHLD, lambda signal_number, stack: consumer_death_strategy(
+            signal_number, stack, consumer_process, thread_executor))
+
         def wrapper(part_number: int):
             ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
                 part_number, chunk_size, chunk_count)
