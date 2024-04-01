@@ -33,7 +33,7 @@ class S3FileHelper:
 
         end_bytes: int = self.__file_size if part_number + \
             1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
-        return f'bytes={start_bytes}-{end_bytes}'
+        return f"bytes={start_bytes}-{end_bytes}"
 
     def get_range_bytes(self, range_string: str) -> bytes:
         '''fetches the range bytes requested from s3'''

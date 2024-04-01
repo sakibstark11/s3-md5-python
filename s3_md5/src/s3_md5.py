@@ -22,17 +22,17 @@ def parse_file_md5(s3_client: S3Client,
     s3_file = S3FileHelper(s3_client, bucket, file_name)
 
     file_size = s3_file.get_file_size()
-    logger.info(f'file size {file_size} bytes')
+    logger.info(f"file size {file_size} bytes")
     if file_size < chunk_size:
         chunk_size = file_size
-    logger.info(f'chunk size {chunk_size} bytes')
+    logger.info(f"chunk size {chunk_size} bytes")
 
     chunk_count = file_size // chunk_size
-    logger.debug(f'chunk count {chunk_count}')
+    logger.debug(f"chunk count {chunk_count}")
 
     if chunk_count < workers:
         workers = chunk_count
-    logger.info(f'workers {workers}')
+    logger.info(f"workers {workers}")
 
     md5_store = Manager().Value(str, '')
     byte_store = Manager().dict()
@@ -56,8 +56,8 @@ def parse_file_md5(s3_client: S3Client,
             # pylint: disable=broad-exception-caught
             except Exception as exception:
                 logger.error(f"parse_file_md5 {exception}")
-                consumer_process.kill()
                 thread_executor.shutdown(wait=False, cancel_futures=True)
+                consumer_process.terminate()
                 sys.exit(1)
         thread_executor.shutdown()
 

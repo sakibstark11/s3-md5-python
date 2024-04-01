@@ -20,8 +20,8 @@ def run():
         args.chunk_size,
         args.workers
     )
-    logger.info(f'md5 hash {md5_hash}')
-    logger.info(f'took {perf_counter() - start_time} seconds')
+    logger.info(f"md5 hash {md5_hash}")
+    logger.info(f"took {perf_counter() - start_time} seconds")
 
 
 if __name__ == "__main__":
