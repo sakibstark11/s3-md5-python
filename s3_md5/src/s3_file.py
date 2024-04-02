@@ -1,4 +1,6 @@
 '''S3 file helper module'''
+from typing import Awaitable
+
 from mypy_boto3_s3 import S3Client
 
 
@@ -11,10 +13,10 @@ class S3FileHelper:
         self.bucket = bucket
         self.file_name = file_name
 
-    def get_file_size(self) -> int:
+    async def get_file_size(self) -> Awaitable[int]:
         '''makes a head object request to get file size in bytes'''
-        s3_object = self.s3_client.head_object(Bucket=self.bucket,
-                                               Key=self.file_name)
+        s3_object = await self.s3_client.head_object(Bucket=self.bucket,
+                                                     Key=self.file_name)
         self.__file_size = s3_object['ContentLength']
         return self.__file_size
 
@@ -33,10 +35,12 @@ class S3FileHelper:
 
         end_bytes: int = self.__file_size if part_number + \
             1 == file_chunk_count else (((part_number * chunk_size) + chunk_size) - 1)
-        return f'bytes={start_bytes}-{end_bytes}'
+        return f"bytes={start_bytes}-{end_bytes}"
 
-    def get_range_bytes(self, range_string: str) -> bytes:
+    async def get_range_bytes(self, range_string: str) -> bytes:
         '''fetches the range bytes requested from s3'''
-        return self.s3_client.get_object(Bucket=self.bucket,
-                                         Key=self.file_name,
-                                         Range=range_string)['Body'].read()
+        s3_object = await self.s3_client.get_object(Bucket=self.bucket,
+                                                    Key=self.file_name,
+                                                    Range=range_string)
+        async with s3_object['Body'] as stream:
+            return await stream.read()
