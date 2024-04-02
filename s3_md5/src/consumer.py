@@ -33,3 +33,4 @@ def consumer(store: Dict[int, bytes], variable: ValueProxy[str], chunk_count: in
         logger.debug("calculating md5 hash")
         md5_hash = hasher.hexdigest()
         variable.value = md5_hash
+        sys.exit()

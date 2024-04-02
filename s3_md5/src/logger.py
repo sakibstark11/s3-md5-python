@@ -3,15 +3,16 @@ import logging
 import os
 import sys
 
-levels = {
+LOG_LEVELS = {
     'CRITICAL': logging.CRITICAL,
-    'ERROR': logging.ERROR,
     'WARNING': logging.WARNING,
-    'INFO': logging.INFO,
-    'DEBUG': logging.DEBUG
+    'ERROR': logging.ERROR,
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO
 }
 logger = logging.getLogger(__name__)
-logger.setLevel(levels.get(os.getenv('LOG_LEVEL', None), logging.INFO))
+log_level = LOG_LEVELS[os.getenv('LOG_LEVEL', 'INFO')]
+logger.setLevel(log_level)
 
 stream_handler = logging.StreamHandler(sys.stdout)
 formatter = logging.Formatter(

@@ -12,17 +12,23 @@ from .consumer import consumer
 from .logger import logger
 from .s3_file import S3FileHelper
 
-setproctitle('s3-md5: main process')
+setproctitle('s3-md5')
 
 
-def consumer_death_strategy(signal_number: int, stack: Any, process: Process, thread_executor: ThreadPoolExecutor):
+def consumer_death_strategy(signal_number: int,
+                            stack: Any,
+                            process: Process,
+                            thread_executor: ThreadPoolExecutor):
     '''handler to call when consumer process dies'''
-    logger.error(f"consumer died with {signal_number}")
-    logger.error(f"consumer stack {stack}")
-    logger.warning("will exit")
-    process.terminate()
-    thread_executor.shutdown(wait=False, cancel_futures=True)
-    sys.exit(1)
+    if process.exitcode != 0:
+        logger.error(
+            f"consumer died with signal number {signal_number} exit code {process.exitcode}")
+        logger.error(f"consumer stack {stack}")
+        logger.warning("will exit")
+        process.terminate()
+        thread_executor.shutdown(wait=False, cancel_futures=True)
+        sys.exit(1)
+    logger.debug("consumer process finished")
 
 
 def parse_file_md5(s3_client: S3Client,
@@ -50,7 +56,7 @@ def parse_file_md5(s3_client: S3Client,
     byte_store = Manager().dict()
 
     consumer_process = Process(target=consumer, args=(
-        byte_store, md5_store, chunk_count), name="s3-md5: sub process")
+        byte_store, md5_store, chunk_count))
     consumer_process.start()
 
     with ThreadPoolExecutor(max_workers=workers) as thread_executor:
@@ -64,6 +70,7 @@ def parse_file_md5(s3_client: S3Client,
             ranged_bytes = s3_file.get_range_bytes(ranged_bytes_string)
             logger.debug(f"downloaded {ranged_bytes_string}")
             byte_store[part_number] = ranged_bytes
+
         for part_number in range(chunk_count):
             try:
                 thread_executor.submit(wrapper, part_number)
@@ -73,6 +80,7 @@ def parse_file_md5(s3_client: S3Client,
                 thread_executor.shutdown(wait=False, cancel_futures=True)
                 consumer_process.terminate()
                 sys.exit(1)
+
         thread_executor.shutdown()
 
     consumer_process.join()
