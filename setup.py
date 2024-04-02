@@ -16,7 +16,8 @@ setup(
         "boto3-stubs[s3]",
         "setproctitle==1.3.3",
         "tqdm==4.66.2",
-        "speedtest-cli==2.1.3"
+        "speedtest-cli==2.1.3",
+        "aioboto3==12.3.0"
     ],
     extras_require={
         "develop": [
