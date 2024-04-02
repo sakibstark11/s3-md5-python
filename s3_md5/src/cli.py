@@ -11,13 +11,13 @@ BIT_IN_BYTE = 0.125
 DEFAULT_CHUNK_SIZE = 1000000
 
 
-def get_download_speed(workers: int):
+def get_download_speed():
     '''uses speed test to get download speed'''
     logger.info("picking chunk size")
     try:
         speed_test = Speedtest()
-        download_speed = speed_test.download()
-        chunk_size = int(download_speed * BIT_IN_BYTE) // workers
+        download_speed = speed_test.download(threads=1)
+        chunk_size = int(download_speed * BIT_IN_BYTE)
         return chunk_size
     # pylint: disable=broad-exception-caught
     except Exception as exception:
@@ -36,13 +36,10 @@ def parse_args():
     parser.add_argument('file_name',
                         help='file name',
                         type=str)
-    parser.add_argument('-w', '--workers', type=int,
-                        default=DEFAULT_WORKERS,
-                        help='number of cpu threads to use for downloading')
     parser.add_argument('-c', '--chunk_size', type=int,
                         default=None,
                         help='chunk size to download on each request')
     parsed_args = parser.parse_args()
     if parsed_args.chunk_size is None:
-        parsed_args.chunk_size = get_download_speed(parsed_args.workers)
+        parsed_args.chunk_size = get_download_speed()
     return parsed_args

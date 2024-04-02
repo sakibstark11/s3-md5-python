@@ -1,7 +1,6 @@
 '''module uses threads to download file from s3 and generates md5 hash'''
 import asyncio
 import sys
-from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Manager, Process
 from signal import SIGCHLD, signal
 from typing import Any
@@ -18,8 +17,7 @@ setproctitle('s3-md5')
 
 def consumer_death_strategy(signal_number: int,
                             stack: Any,
-                            process: Process,
-                            thread_executor: ThreadPoolExecutor):
+                            process: Process):
     '''handler to call when consumer process dies'''
     if process.exitcode != 0:
         logger.error(
@@ -27,7 +25,6 @@ def consumer_death_strategy(signal_number: int,
         logger.error(f"consumer stack {stack}")
         logger.warning("will exit")
         process.terminate()
-        thread_executor.shutdown(wait=False, cancel_futures=True)
         sys.exit(1)
     logger.debug("consumer process finished")
 
@@ -35,8 +32,7 @@ def consumer_death_strategy(signal_number: int,
 def parse_file_md5(s3_client: S3Client,
                    bucket: str,
                    file_name: str,
-                   chunk_size: int,
-                   workers: int) -> str:
+                   chunk_size: int) -> str:
     '''main function to orchestrate the md5 generation of s3 object'''
     s3_file = S3FileHelper(s3_client, bucket, file_name)
 
@@ -49,10 +45,6 @@ def parse_file_md5(s3_client: S3Client,
     chunk_count = file_size // chunk_size
     logger.debug(f"chunk count {chunk_count}")
 
-    if chunk_count < workers:
-        workers = chunk_count
-    logger.info(f"workers {workers}")
-
     md5_store = Manager().Value(str, '')
     byte_store = Manager().dict()
 
@@ -61,7 +53,7 @@ def parse_file_md5(s3_client: S3Client,
     consumer_process.start()
 
     signal(SIGCHLD, lambda signal_number, stack: consumer_death_strategy(
-        signal_number, stack, consumer_process, None))
+        signal_number, stack, consumer_process))
 
     async def wrapper(part_number: int):
         ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
@@ -75,6 +67,7 @@ def parse_file_md5(s3_client: S3Client,
     try:
         loop.run_until_complete(asyncio.gather(
             *[wrapper(part_number) for part_number in range(chunk_count)]))
+    # pylint: disable=broad-exception-caught
     except Exception as exception:
         logger.error(f"parse_file_md5 {exception}")
         consumer_process.terminate()

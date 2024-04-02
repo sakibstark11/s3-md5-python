@@ -18,7 +18,6 @@ def run():
         args.bucket,
         args.file_name,
         args.chunk_size,
-        args.workers
     )
     logger.info(f"md5 hash {md5_hash}")
     logger.info(f"took {perf_counter() - start_time} seconds")
