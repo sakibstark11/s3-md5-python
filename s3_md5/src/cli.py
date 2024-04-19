@@ -9,6 +9,7 @@ from .logger import logger
 DEFAULT_WORKERS = cpu_count() * 2 - 1
 BIT_IN_BYTE = 0.125
 DEFAULT_CHUNK_SIZE = 1000000
+DEFAULT_BLOCK_SIZE = 10
 
 
 def get_download_speed():
@@ -39,6 +40,9 @@ def parse_args():
     parser.add_argument('-c', '--chunk_size', type=int,
                         default=None,
                         help='chunk size to download on each request')
+    parser.add_argument('-b', '--block_size', type=int,
+                        default=DEFAULT_BLOCK_SIZE,
+                        help='maximum concurrent request')
     parsed_args = parser.parse_args()
     if parsed_args.chunk_size is None:
         parsed_args.chunk_size = get_download_speed()
