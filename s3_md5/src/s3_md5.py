@@ -23,7 +23,7 @@ async def parse_file_md5(s3_client: S3Client,
     s3_file = S3FileHelper(s3_client, bucket, file_name)
 
     file_size = await s3_file.get_file_size()
-    logger.info(f"file size {file_size} bytes")
+    logger.info(f"file size {bytes_to_mega_bytes(file_size)} megabyte(s)")
     if file_size < chunk_size:
         chunk_size = file_size
     logger.info(f"chunk size {bytes_to_mega_bytes(chunk_size)} megabyte(s)")
