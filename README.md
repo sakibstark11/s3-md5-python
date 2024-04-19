@@ -42,8 +42,8 @@ python s3_md5/main.py <bucket_name> <file_name>
 
 There are two _optional_ arguments that you may want to provide
 
--   `-w` or workers sets the number of python threads to use for downloading purposes, by default its set to the following equation `number of cpu cores * 2 - 1`
 -   `-c` or chunk size in **bytes** sets the individual download size on each get request sent to s3, by default it will use [speedtest-cli](https://pypi.org/project/speedtest-cli/) to determine the network speed.
+-   `-b` or block size that determines how many concurrent requests the application should send to s3. This is to prevent s3 from throttling the application due to rate limiting. By default it is set to **10**. Please increase this as this is dependent on your aws account s3 api request limit.
 
 ### Example
 

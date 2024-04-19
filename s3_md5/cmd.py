@@ -7,6 +7,7 @@ from aioboto3 import Session
 from s3_md5.src.cli import parse_args
 from s3_md5.src.logger import logger
 from s3_md5.src.s3_md5 import parse_file_md5
+from s3_md5.src.utils import seconds_to_minutes
 
 
 async def run():
@@ -20,9 +21,11 @@ async def run():
             args.bucket,
             args.file_name,
             args.chunk_size,
+            args.block_size
         )
         logger.info(f"md5 hash {md5_hash}")
-        logger.info(f"took {perf_counter() - start_time} seconds")
+        logger.info(
+            f"took {seconds_to_minutes(perf_counter() - start_time)} minute(s)")
 
 
 if __name__ == "__main__":
