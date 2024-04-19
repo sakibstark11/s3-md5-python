@@ -1,12 +1,12 @@
 # s3-md5
 
-Get fast md5 hashes for an s3 file.
+Get fast md5 hashes for an s3 file. This works by utilizing a process to fetch chunks into by doing them in threads while having another process consuming the shared dictionary. Given MD5 hashes need to be processed sequentially, it keeps looking for the expected chunk to ensure the order is right.
 
-## installation
+## Requirements
 
 -   python 3.10
 
-## how to use
+## Usage
 
 You can use the tool as a command line argument. You can download the latest release from [here](https://github.com/sakibstark11/s3-md5-python/releases). You can also build the wheel file yourself by running the following command.
 
@@ -38,11 +38,16 @@ Or you can directly invoke the script by running
 python s3_md5/main.py <bucket_name> <file_name>
 ```
 
+### Arguments
+
 There are two _optional_ arguments that you may want to provide
 
--   `-w` or workers sets the number of python threads to use for downloading purposes, by default its set to the following equation `number of cpu cores * 2 - 1`
--   `-c` or chunk size in **bytes** sets the individual download size on each get request sent to s3, by default its set to `1000000`
+-   `-c` or chunk size in **bytes** sets the individual download size on each get request sent to s3, by default it will use [speedtest-cli](https://pypi.org/project/speedtest-cli/) to determine the network speed.
+-   `-b` or block size that determines how many concurrent requests the application should send to s3. This is to prevent s3 from throttling the application due to rate limiting. By default it is set to **10**. Please increase this as this is dependent on your aws account s3 api request limit.
 
-## caveats
+### Example
 
--   File size can not be smaller than the default chunk size of `1000000`, if yes, then the chunk size must be manually provided or it will raise an assertion error.
+for a file size of `1048576000` bytes
+on a 250 mpbs bandwidth
+on a macbook m1 8 core cpu
+a chunk size of `4000000` works the best as it completes it within ~100 seconds
