@@ -23,6 +23,7 @@ def consumer(store: Dict[int, bytes], variable: ValueProxy[str], chunk_count: in
                         f"consumed chunk {element_to_consume}"
                         + " " +
                         f"left {chunk_count - element_to_consume + 1}")
+                    del store[element_to_consume]
                     element_to_consume += 1
                     progress_bar.update(1)
             # pylint: disable=broad-exception-caught
