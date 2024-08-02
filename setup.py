@@ -24,6 +24,7 @@ setup(
             "moto==4.0.12",
             "pytest==7.2.0",
             "pylint==3.1.0",
+            "pytest-asyncio==0.23.8"
         ],
         "release": ["wheel==0.43.0"]
     },
