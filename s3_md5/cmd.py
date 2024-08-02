@@ -29,4 +29,8 @@ async def run():
 
 
 if __name__ == "__main__":
-    asyncio_run(run())
+    try:
+        asyncio_run(run())
+    # pylint: disable=broad-exception-caught
+    except Exception as exception:
+        logger.error(f"cmd {exception}")

@@ -1,4 +1,3 @@
-'''module uses threads to download file from s3 and generates md5 hash'''
 import asyncio
 import sys
 from multiprocessing import Manager, Process
@@ -20,15 +19,15 @@ setproctitle('s3-md5')
 def consumer_death_strategy(signal_number: int,
                             stack: Any,
                             process: Process):
-    '''handler to call when consumer process dies'''
+    '''Handler to call when consumer process dies'''
     if process.exitcode != 0:
         logger.error(
-            f"consumer died with signal number {signal_number} exit code {process.exitcode}")
-        logger.error(f"consumer stack {stack}")
-        logger.warning("will exit")
+            f"Consumer died with signal number {signal_number} exit code {process.exitcode}")
+        logger.error(f"Consumer stack {stack}")
+        logger.warning("Will exit")
         process.terminate()
         sys.exit(1)
-    logger.debug("consumer process finished")
+    logger.debug("Consumer process finished")
 
 
 async def parse_file_md5(s3_client: S3Client,
@@ -36,19 +35,19 @@ async def parse_file_md5(s3_client: S3Client,
                          file_name: str,
                          chunk_size: int,
                          block_size: int):
-    '''main function to orchestrate the md5 generation of s3 object'''
+    '''Main function to orchestrate the MD5 generation of S3 object'''
     s3_file = S3FileHelper(s3_client, bucket, file_name)
 
     file_size = await s3_file.get_file_size()
-    logger.info(f"file size {bytes_to_mega_bytes(file_size)} megabyte(s)")
+    logger.info(f"File size {bytes_to_mega_bytes(file_size)} megabyte(s)")
     if file_size < chunk_size:
         chunk_size = file_size
-    logger.info(f"chunk size {bytes_to_mega_bytes(chunk_size)} megabyte(s)")
+    logger.info(f"Chunk size {bytes_to_mega_bytes(chunk_size)} megabyte(s)")
 
     chunk_count = file_size // chunk_size
-    logger.info(f"chunk count {chunk_count}")
+    logger.info(f"Chunk count {chunk_count}")
 
-    logger.info(f"block size {block_size}")
+    logger.info(f"Block size {block_size}")
 
     md5_store = Manager().Value(str, '')
     byte_store = Manager().dict()
@@ -60,30 +59,26 @@ async def parse_file_md5(s3_client: S3Client,
 
     signal(SIGCHLD, lambda signal_number, stack: consumer_death_strategy(
         signal_number, stack, consumer_process))
-    with tqdm(total=chunk_count, position=0, desc="downloaded") as progress_bar:
-        async def wrapper(part_number: int):
-            ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
-                part_number, chunk_size, chunk_count)
-            logger.debug(
-                f"downloading {part_number + 1} {ranged_bytes_string}")
-            ranged_bytes = await s3_file.get_range_bytes(ranged_bytes_string)
-            logger.debug(f"downloaded {part_number + 1} {ranged_bytes_string}")
-            progress_bar.update(1)
-            byte_store[part_number] = ranged_bytes
 
-        # Process tasks in blocks
-        async with semaphore:
+    with tqdm(total=chunk_count, position=0, desc="downloaded") as progress_bar:
+        async with asyncio.TaskGroup() as task_group:
+            async def wrapper(part_number: int):
+                ranged_bytes_string = s3_file.calculate_range_bytes_from_part_number(
+                    part_number, chunk_size, chunk_count)
+                async with semaphore:
+                    logger.debug(
+                        f"Downloading {part_number + 1} {ranged_bytes_string}")
+                    ranged_bytes = await s3_file.get_range_bytes(ranged_bytes_string)
+                    logger.debug(
+                        f"Downloaded {part_number + 1} {ranged_bytes_string}")
+                    progress_bar.update(1)
+                    byte_store[part_number] = ranged_bytes
+
+            # Process tasks in blocks
             for i in range(0, chunk_count, block_size):
                 block_end = min(i + block_size, chunk_count)
-                block_tasks = [wrapper(part_number)
-                               for part_number in range(i, block_end)]
-                try:
-                    await asyncio.gather(*block_tasks)
-                # pylint: disable=broad-exception-caught
-                except Exception as exception:
-                    logger.error(f"parse_file_md5 {exception}")
-                    consumer_process.terminate()
-                    sys.exit(1)
+                for part_number in range(i, block_end):
+                    task_group.create_task(wrapper(part_number))
 
     consumer_process.join()
     return md5_store.value
