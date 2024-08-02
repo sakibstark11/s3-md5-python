@@ -13,16 +13,16 @@ def consumer(store: Dict[int, bytes], variable: ValueProxy[str], chunk_count: in
     hasher = md5()
     logger.debug("consumer started")
     element_to_consume = 0
-    with tqdm(total=chunk_count) as progress_bar:
+    with tqdm(total=chunk_count, position=1, desc="consumed") as progress_bar:
         while element_to_consume < chunk_count:
             try:
                 potential_item = store.get(element_to_consume)
                 if potential_item is not None:
                     hasher.update(potential_item)
                     logger.debug(
-                        f"consumed chunk {element_to_consume}"
+                        f"consumed chunk {element_to_consume + 1}"
                         + " " +
-                        f"left {chunk_count - element_to_consume + 1}")
+                        f"left {chunk_count - (element_to_consume + 1)}")
                     del store[element_to_consume]
                     element_to_consume += 1
                     progress_bar.update(1)
