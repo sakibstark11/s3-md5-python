@@ -35,7 +35,7 @@ s3-md5 <bucket_name> <file_name>
 Or you can directly invoke the script by running
 
 ```sh
-python s3_md5/main.py <bucket_name> <file_name>
+python s3_md5/cmd.py <bucket_name> <file_name>
 ```
 
 ### Arguments
