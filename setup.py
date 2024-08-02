@@ -12,8 +12,11 @@ setup(
     author_email="16sakib@gmail.com",
     license="MIT",
     install_requires=[
-        "boto3==1.26.41",
         "boto3-stubs[s3]",
+        "setproctitle==1.3.3",
+        "tqdm==4.66.2",
+        "speedtest-cli==2.1.3",
+        "aioboto3==12.3.0"
     ],
     extras_require={
         "develop": [
@@ -21,6 +24,7 @@ setup(
             "moto==4.0.12",
             "pytest==7.2.0",
             "pylint==3.1.0",
+            "pytest-asyncio==0.23.8"
         ],
         "release": ["wheel==0.43.0"]
     },
